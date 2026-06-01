@@ -23,7 +23,7 @@ export function TickerSearch() {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Enter stock ticker (e.g. AAPL)"
+          placeholder="Введите тикер акции (напр. AAPL)"
           value={ticker}
           onChange={(e) => setTicker(e.target.value.toUpperCase())}
           className="h-14 pl-12 pr-4 text-lg bg-secondary border-border focus:border-primary focus:ring-primary placeholder:text-muted-foreground"
@@ -34,7 +34,7 @@ export function TickerSearch() {
         size="lg"
         className="h-14 px-8 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
       >
-        Analyze
+        Анализировать
       </Button>
     </form>
   );

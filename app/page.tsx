@@ -14,10 +14,10 @@ export default function HomePage() {
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-              Features
+              Функции
             </a>
             <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
+              Цены
             </a>
             <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
               API
@@ -32,10 +32,10 @@ export default function HomePage() {
           {/* Headline */}
           <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground tracking-tight text-balance">
-              AI-Powered Stock Analysis
+              ИИ-анализ акций
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-              Get institutional-grade research reports in seconds
+              Получайте профессиональные аналитические отчёты за секунды
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export default function HomePage() {
 
           {/* Popular Tickers */}
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span>Popular:</span>
+            <span>Популярные:</span>
             <div className="flex gap-2">
               {["AAPL", "TSLA", "NVDA", "MSFT"].map((ticker) => (
                 <a
@@ -66,18 +66,18 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-6">
             <FeatureCard
               icon={Brain}
-              title="AI Analysis"
-              description="Advanced machine learning models analyze financial data, news sentiment, and market trends to generate comprehensive insights."
+              title="ИИ-анализ"
+              description="Продвинутые модели машинного обучения анализируют финансовые данные, новостной фон и рыночные тренды для формирования комплексных выводов."
             />
             <FeatureCard
               icon={Activity}
-              title="Real-time Data"
-              description="Access live market data, price movements, and trading volumes with institutional-grade accuracy and speed."
+              title="Данные в реальном времени"
+              description="Доступ к актуальным рыночным данным, динамике цен и объёмам торгов с профессиональной точностью и скоростью."
             />
             <FeatureCard
               icon={Scale}
-              title="Bull & Bear Case"
-              description="Get balanced perspectives with detailed bull and bear cases, helping you make informed investment decisions."
+              title="Бычий и медвежий сценарии"
+              description="Получайте сбалансированные перспективы с детальными бычьим и медвежьим сценариями для принятия обоснованных инвестиционных решений."
             />
           </div>
         </section>
@@ -92,14 +92,14 @@ export default function HomePage() {
               <span className="font-semibold text-foreground">StockAI</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} StockAI. All rights reserved.
+              &copy; {new Date().getFullYear()} StockAI. Все права защищены.
             </p>
             <div className="flex items-center gap-6">
               <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Privacy
+                Конфиденциальность
               </a>
               <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms
+                Условия
               </a>
             </div>
           </div>

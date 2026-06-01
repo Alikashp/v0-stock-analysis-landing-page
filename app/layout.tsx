@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'StockAI - AI-Powered Stock Analysis',
-  description: 'Get institutional-grade research reports in seconds with AI-powered stock analysis',
+  title: 'StockAI - ИИ-анализ акций',
+  description: 'Получайте профессиональные аналитические отчёты за секунды с помощью искусственного интеллекта',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-background">
+    <html lang="ru" className="bg-background">
       <body className="font-sans antialiased min-h-screen bg-background">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
