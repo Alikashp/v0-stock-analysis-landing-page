@@ -15,6 +15,7 @@ interface AnalysisData {
     dividend_yield: number | null;
     week_52_high: number;
     week_52_low: number;
+    currency_symbol: string;
   };
   report: {
     executive_summary: string;
@@ -104,13 +105,13 @@ export function ReportContent({ ticker }: ReportContentProps) {
     return `${prefix}${num.toLocaleString()}${suffix}`;
   };
 
-  const formatMarketCap = (value: number | string | null | undefined): string => {
+  const formatMarketCap = (value: number | string | null | undefined, currencySymbol: string): string => {
     if (value === null || value === undefined) return "Н/Д";
     
     // If already formatted as a string (e.g., "$4.58T"), return as-is
     if (typeof value === "string") {
-      if (value.includes("T") || value.includes("B") || value.includes("M")) {
-        return value.startsWith("$") ? value : `$${value}`;
+      if (value.includes("T") || value.includes("B") || value.includes("M") || value.includes("трлн") || value.includes("млрд") || value.includes("млн")) {
+        return value;
       }
       // Try parsing as number
       const parsed = parseFloat(value.replace(/[^0-9.-]/g, ""));
@@ -118,15 +119,16 @@ export function ReportContent({ ticker }: ReportContentProps) {
       value = parsed;
     }
     
-    // Format raw number
+    // Format raw number with appropriate suffix based on currency
+    const isRuble = currencySymbol === "₽";
     if (value >= 1e12) {
-      return `$${(value / 1e12).toFixed(2)} трлн`;
+      return `${currencySymbol}${(value / 1e12).toFixed(2)} ${isRuble ? "трлн" : "T"}`;
     } else if (value >= 1e9) {
-      return `$${(value / 1e9).toFixed(2)} млрд`;
+      return `${currencySymbol}${(value / 1e9).toFixed(2)} ${isRuble ? "млрд" : "B"}`;
     } else if (value >= 1e6) {
-      return `$${(value / 1e6).toFixed(2)} млн`;
+      return `${currencySymbol}${(value / 1e6).toFixed(2)} ${isRuble ? "млн" : "M"}`;
     } else {
-      return `$${value.toLocaleString()}`;
+      return `${currencySymbol}${value.toLocaleString()}`;
     }
   };
 
@@ -134,6 +136,8 @@ export function ReportContent({ ticker }: ReportContentProps) {
     if (num === null || num === undefined) return "Н/Д";
     return `${num >= 0 ? "+" : ""}${num.toFixed(2)}%`;
   };
+
+  const currencySymbol = data.key_indicators.currency_symbol || "$";
 
   return (
     <div className="space-y-8">
@@ -162,11 +166,11 @@ export function ReportContent({ ticker }: ReportContentProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Цена</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.price, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.price, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Капитализация</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatMarketCap(data.key_indicators.market_cap)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatMarketCap(data.key_indicators.market_cap, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">P/E</p>
@@ -178,7 +182,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">EPS (факт)</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.eps_actual, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.eps_actual, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Дивидендная доходность</p>
@@ -186,11 +190,11 @@ export function ReportContent({ ticker }: ReportContentProps) {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Макс. 52 нед.</p>
-              <p className="text-xl font-mono font-semibold text-chart-1">{formatNumber(data.key_indicators.week_52_high, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-chart-1">{formatNumber(data.key_indicators.week_52_high, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Мин. 52 нед.</p>
-              <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.key_indicators.week_52_low, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.key_indicators.week_52_low, currencySymbol)}</p>
             </div>
           </div>
         </CardContent>
@@ -330,7 +334,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Оценка</span>
-                <span className="text-2xl font-mono font-bold text-foreground">${data.report.fair_value.estimate.toLocaleString()}</span>
+                <span className="text-2xl font-mono font-bold text-foreground">{currencySymbol}{data.report.fair_value.estimate.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Потенциал роста</span>
