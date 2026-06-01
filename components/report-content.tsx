@@ -6,14 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AnalysisData {
   ticker: string;
-  price: number;
-  market_cap: string;
-  pe_ratio: number | null;
-  pe_forward: number | null;
-  eps_actual: number | null;
-  dividend_yield: number | null;
-  week_52_high: number;
-  week_52_low: number;
+  key_indicators: {
+    price: number;
+    market_cap: string;
+    pe_ratio: number | null;
+    pe_forward: number | null;
+    eps_actual: number | null;
+    dividend_yield: number | null;
+    week_52_high: number;
+    week_52_low: number;
+  };
   report: {
     executive_summary: string;
     bull_case: string[];
@@ -134,35 +136,35 @@ export function ReportContent({ ticker }: ReportContentProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Price</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.price, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.price, "$")}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Market Cap</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{data.market_cap}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{data.key_indicators.market_cap}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">P/E Ratio</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.pe_ratio)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.pe_ratio)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Forward P/E</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.pe_forward)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.pe_forward)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">EPS (Actual)</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.eps_actual, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.eps_actual, "$")}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Dividend Yield</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.dividend_yield, "", "%")}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.dividend_yield, "", "%")}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">52W High</p>
-              <p className="text-xl font-mono font-semibold text-chart-1">{formatNumber(data.week_52_high, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-chart-1">{formatNumber(data.key_indicators.week_52_high, "$")}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">52W Low</p>
-              <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.week_52_low, "$")}</p>
+              <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.key_indicators.week_52_low, "$")}</p>
             </div>
           </div>
         </CardContent>
@@ -277,7 +279,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Overall Score</span>
-                <span className="text-2xl font-mono font-bold text-primary">{data.report.financial_health.score}/100</span>
+                <span className="text-2xl font-mono font-bold text-primary">{data.report.financial_health.score}/10</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Growth Rating</span>
