@@ -8,7 +8,7 @@ interface AnalysisData {
   ticker: string;
   key_indicators: {
     price: number;
-    market_cap: string;
+    market_cap: number | string;
     pe_ratio: number | null;
     pe_forward: number | null;
     eps_actual: number | null;
@@ -104,6 +104,32 @@ export function ReportContent({ ticker }: ReportContentProps) {
     return `${prefix}${num.toLocaleString()}${suffix}`;
   };
 
+  const formatMarketCap = (value: number | string | null | undefined): string => {
+    if (value === null || value === undefined) return "N/A";
+    
+    // If already formatted as a string (e.g., "$4.58T"), return as-is
+    if (typeof value === "string") {
+      if (value.includes("T") || value.includes("B") || value.includes("M")) {
+        return value.startsWith("$") ? value : `$${value}`;
+      }
+      // Try parsing as number
+      const parsed = parseFloat(value.replace(/[^0-9.-]/g, ""));
+      if (isNaN(parsed)) return value;
+      value = parsed;
+    }
+    
+    // Format raw number
+    if (value >= 1e12) {
+      return `$${(value / 1e12).toFixed(2)}T`;
+    } else if (value >= 1e9) {
+      return `$${(value / 1e9).toFixed(2)}B`;
+    } else if (value >= 1e6) {
+      return `$${(value / 1e6).toFixed(2)}M`;
+    } else {
+      return `$${value.toLocaleString()}`;
+    }
+  };
+
   const formatPercent = (num: number | null | undefined) => {
     if (num === null || num === undefined) return "N/A";
     return `${num >= 0 ? "+" : ""}${num.toFixed(2)}%`;
@@ -140,7 +166,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Market Cap</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{data.key_indicators.market_cap}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatMarketCap(data.key_indicators.market_cap)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">P/E Ratio</p>
