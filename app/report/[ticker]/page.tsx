@@ -22,7 +22,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
           <Button variant="ghost" asChild>
             <Link href="/" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
-              New Analysis
+              Новый анализ
             </Link>
           </Button>
         </div>
