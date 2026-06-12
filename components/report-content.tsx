@@ -6,38 +6,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AnalysisData {
   ticker: string;
-  key_indicators: {
-    price: number;
-    market_cap: number | string;
-    pe_ratio: number | null;
-    pe_forward: number | null;
-    eps_actual: number | null;
-    dividend_yield: number | null;
-    week_52_high: number;
-    week_52_low: number;
-    currency_symbol: string;
+  key_indicators?: {
+    price?: number;
+    market_cap?: number | string;
+    pe_ratio?: number | null;
+    pe_forward?: number | null;
+    eps_actual?: number | null;
+    dividend_yield?: number | null;
+    week_52_high?: number;
+    week_52_low?: number;
+    currency_symbol?: string;
   };
-  report: {
-    executive_summary: string;
-    bull_case: string[];
-    bear_case: string[];
-    swot: {
-      strengths: string[];
-      weaknesses: string[];
-      opportunities: string[];
-      threats: string[];
+  report?: {
+    executive_summary?: string;
+    bull_case?: string[];
+    bear_case?: string[];
+    swot?: {
+      strengths?: string[];
+      weaknesses?: string[];
+      opportunities?: string[];
+      threats?: string[];
     };
-    financial_health: {
-      score: number;
-      growth_rating: string;
-      profitability_rating: string;
+    financial_health?: {
+      score?: number;
+      growth_rating?: string;
+      profitability_rating?: string;
     };
-    fair_value: {
-      estimate: number;
-      upside_pct: number;
+    fair_value?: {
+      estimate?: number;
+      upside_pct?: number;
     };
   };
-  news: Array<{
+  news?: Array<{
     title: string;
     date: string;
   }>;
@@ -172,7 +172,14 @@ export function ReportContent({ ticker }: ReportContentProps) {
     return `${prefix}${value.toLocaleString()}`;
   };
 
-  const currencySymbol = data.key_indicators.currency_symbol || "$";
+  const currencySymbol = data.key_indicators?.currency_symbol || "$";
+
+  const bullCase = data.report?.bull_case ?? [];
+  const bearCase = data.report?.bear_case ?? [];
+  const swotStrengths = data.report?.swot?.strengths ?? [];
+  const swotWeaknesses = data.report?.swot?.weaknesses ?? [];
+  const swotOpportunities = data.report?.swot?.opportunities ?? [];
+  const swotThreats = data.report?.swot?.threats ?? [];
 
   return (
     <div className="space-y-8">
@@ -201,35 +208,35 @@ export function ReportContent({ ticker }: ReportContentProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Цена</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.price, currencySymbol)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.price, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Капитализация</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatMarketCap(data.key_indicators.market_cap, currencySymbol)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatMarketCap(data.key_indicators?.market_cap, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">P/E</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.pe_ratio)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.pe_ratio)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Forward P/E</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.pe_forward)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.pe_forward)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">EPS (факт)</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.eps_actual, currencySymbol)}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.eps_actual, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Дивидендная доходность</p>
-              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators.dividend_yield, "", "%")}</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.dividend_yield, "", "%")}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Макс. 52 нед.</p>
-              <p className="text-xl font-mono font-semibold text-chart-1">{formatNumber(data.key_indicators.week_52_high, currencySymbol)}</p>
+              <p className="text-xl font-mono font-semibold text-chart-1">{formatNumber(data.key_indicators?.week_52_high, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Мин. 52 нед.</p>
-              <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.key_indicators.week_52_low, currencySymbol)}</p>
+              <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.key_indicators?.week_52_low, currencySymbol)}</p>
             </div>
           </div>
         </CardContent>
@@ -242,7 +249,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground leading-relaxed">
-            {data.report.executive_summary}
+            {data.report?.executive_summary}
           </p>
         </CardContent>
       </Card>
@@ -258,7 +265,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {data.report.bull_case.map((item, index) => (
+              {bullCase.map((item, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-chart-1 mt-1">•</span>
                   {item}
@@ -277,7 +284,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {data.report.bear_case.map((item, index) => (
+              {bearCase.map((item, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-chart-4 mt-1">•</span>
                   {item}
@@ -298,7 +305,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="p-4 rounded-lg bg-chart-1/10 border border-chart-1/20">
               <h4 className="font-semibold text-chart-1 mb-2">Сильные стороны</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                {data.report.swot.strengths.map((item, index) => (
+                {swotStrengths.map((item, index) => (
                   <li key={index}>• {item}</li>
                 ))}
               </ul>
@@ -306,7 +313,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="p-4 rounded-lg bg-chart-4/10 border border-chart-4/20">
               <h4 className="font-semibold text-chart-4 mb-2">Слабые стороны</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                {data.report.swot.weaknesses.map((item, index) => (
+                {swotWeaknesses.map((item, index) => (
                   <li key={index}>• {item}</li>
                 ))}
               </ul>
@@ -314,7 +321,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
               <h4 className="font-semibold text-primary mb-2">Возможности</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                {data.report.swot.opportunities.map((item, index) => (
+                {swotOpportunities.map((item, index) => (
                   <li key={index}>• {item}</li>
                 ))}
               </ul>
@@ -322,7 +329,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
               <h4 className="font-semibold text-orange-500 mb-2">Угрозы</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                {data.report.swot.threats.map((item, index) => (
+                {swotThreats.map((item, index) => (
                   <li key={index}>• {item}</li>
                 ))}
               </ul>
@@ -344,15 +351,15 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Общий балл</span>
-                <span className="text-2xl font-mono font-bold text-primary">{data.report.financial_health.score}/10</span>
+                <span className="text-2xl font-mono font-bold text-primary">{data.report?.financial_health?.score ?? "Н/Д"}/10</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Рейтинг роста</span>
-                <span className="font-semibold text-foreground">{data.report.financial_health.growth_rating}</span>
+                <span className="font-semibold text-foreground">{data.report?.financial_health?.growth_rating ?? "Н/Д"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Рентабельность</span>
-                <span className="font-semibold text-foreground">{data.report.financial_health.profitability_rating}</span>
+                <span className="font-semibold text-foreground">{data.report?.financial_health?.profitability_rating ?? "Н/Д"}</span>
               </div>
             </div>
           </CardContent>
@@ -369,12 +376,12 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Оценка</span>
-                <span className="text-2xl font-mono font-bold text-foreground">{currencySymbol}{data.report.fair_value.estimate.toLocaleString()}</span>
+                <span className="text-2xl font-mono font-bold text-foreground">{currencySymbol}{data.report?.fair_value?.estimate?.toLocaleString() ?? "Н/Д"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Потенциал роста</span>
-                <span className={`text-xl font-mono font-bold ${data.report.fair_value.upside_pct >= 0 ? "text-chart-1" : "text-chart-4"}`}>
-                  {formatPercent(data.report.fair_value.upside_pct)}
+                <span className={`text-xl font-mono font-bold ${(data.report?.fair_value?.upside_pct ?? 0) >= 0 ? "text-chart-1" : "text-chart-4"}`}>
+                  {formatPercent(data.report?.fair_value?.upside_pct)}
                 </span>
               </div>
             </div>
