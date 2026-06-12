@@ -95,6 +95,13 @@ export function ReportContent({ ticker }: ReportContentProps) {
 
         const result = await response.json();
         console.log("[v0] Analysis result received:", result);
+        console.log("[v0] data structure before setState:", {
+          ticker: result?.ticker,
+          key_indicators: result?.key_indicators,
+          report: result?.report,
+          news: result?.news,
+          insider_trades: result?.insider_trades,
+        });
         setData(result);
       } catch (err) {
         console.log("[v0] Fetch error:", err instanceof Error ? err.message : err);
