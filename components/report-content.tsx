@@ -96,6 +96,8 @@ export function ReportContent({ ticker }: ReportContentProps) {
         const result = await response.json();
         console.log("[v0] Analysis result received:", result);
         setData(result);
+        console.log("insider_trades:", result.insider_trades);
+        console.log("все ключи:", Object.keys(result));
       } catch (err) {
         console.log("[v0] Fetch error:", err instanceof Error ? err.message : err);
         setError("Ошибка загрузки. Попробуйте снова.");
@@ -411,8 +413,8 @@ export function ReportContent({ ticker }: ReportContentProps) {
         </Card>
       )}
 
-      {/* Insider Trades */}
-      {data.insider_trades && data.insider_trades.length > 0 && (
+      {/* Insider Trades */}      
+      {Array.isArray(data.insider_trades) && (.length > 0 && (
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
