@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AnalysisData {
@@ -41,6 +41,14 @@ interface AnalysisData {
     title: string;
     date: string;
   }>;
+  insider_trades?: Array<{
+    name: string;
+    title: string;
+    transaction: string;
+    shares: number | string;
+    value: number | string;
+    date: string;
+  }>;
 }
 
 interface ReportContentProps {
@@ -57,22 +65,39 @@ export function ReportContent({ ticker }: ReportContentProps) {
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analyze`, {
+
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        console.log("[v0] NEXT_PUBLIC_API_URL:", baseUrl);
+
+        if (!baseUrl) {
+          console.log("[v0] NEXT_PUBLIC_API_URL is not set!");
+        }
+
+        const url = `${baseUrl}/analyze`;
+        const payload = { ticker: ticker.toUpperCase() };
+        console.log("[v0] Fetching:", url, "with body:", payload);
+
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ticker: ticker.toUpperCase() }),
+          body: JSON.stringify(payload),
         });
 
+        console.log("[v0] Response status:", response.status, response.statusText);
+
         if (!response.ok) {
-          throw new Error("Failed to fetch analysis");
+          const text = await response.text();
+          console.log("[v0] Response not OK. Body:", text);
+          throw new Error(`Failed to fetch analysis: ${response.status}`);
         }
 
         const result = await response.json();
+        console.log("[v0] Analysis result received:", result);
         setData(result);
-      } catch {
+      } catch (err) {
+        console.log("[v0] Fetch error:", err instanceof Error ? err.message : err);
         setError("Ошибка загрузки. Попробуйте снова.");
       } finally {
         setLoading(false);
@@ -135,6 +160,16 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const formatPercent = (num: number | null | undefined) => {
     if (num === null || num === undefined) return "Н/Д";
     return `${num >= 0 ? "+" : ""}${num.toFixed(2)}%`;
+  };
+
+  const formatTradeNumber = (value: number | string | null | undefined, prefix = "") => {
+    if (value === null || value === undefined || value === "") return "Н/Д";
+    if (typeof value === "string") {
+      const parsed = parseFloat(value.replace(/[^0-9.-]/g, ""));
+      if (isNaN(parsed)) return value;
+      value = parsed;
+    }
+    return `${prefix}${value.toLocaleString()}`;
   };
 
   const currencySymbol = data.key_indicators.currency_symbol || "$";
@@ -365,6 +400,52 @@ export function ReportContent({ ticker }: ReportContentProps) {
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Insider Trades */}
+      {data.insider_trades && data.insider_trades.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Users className="h-5 w-5 text-primary" />
+              Сделки инсайдеров
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Имя</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Должность</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Тип сделки</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Кол-во акций</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Сумма</th>
+                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.insider_trades.map((trade, index) => {
+                    const isBuy = /buy|покуп/i.test(trade.transaction);
+                    const isSell = /sell|прод/i.test(trade.transaction);
+                    return (
+                      <tr key={index} className="border-b border-border last:border-0">
+                        <td className="py-3 pr-4 text-foreground">{trade.name}</td>
+                        <td className="py-3 pr-4 text-muted-foreground">{trade.title}</td>
+                        <td className={`py-3 pr-4 font-medium ${isBuy ? "text-chart-1" : isSell ? "text-chart-4" : "text-foreground"}`}>
+                          {trade.transaction}
+                        </td>
+                        <td className="py-3 pr-4 text-right font-mono text-foreground">{formatTradeNumber(trade.shares)}</td>
+                        <td className="py-3 pr-4 text-right font-mono text-foreground">{formatTradeNumber(trade.value, currencySymbol)}</td>
+                        <td className="py-3 text-muted-foreground whitespace-nowrap">{trade.date}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}
