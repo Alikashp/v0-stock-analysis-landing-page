@@ -51,6 +51,7 @@ interface AnalysisData {
   }>;
   politician_trades?: Array<{
     name: string;
+    senator: string;
     party: string;
     chamber: string;
     transaction: string;
@@ -58,6 +59,11 @@ interface AnalysisData {
     trade_date: string;
     disclosure_date: string;
     ticker?: string;
+    transaction_date: string;
+    owner: string;
+    asset_description: string;
+    type: string;
+    amount: string;
   }>;
 }
 
@@ -438,11 +444,16 @@ export function ReportContent({ ticker }: ReportContentProps) {
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="py-2 pr-4 font-medium text-muted-foreground">Имя</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Должность</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Сенатор</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Партия</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Палата</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Владелец</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Актив</th>
                     <th className="py-2 pr-4 font-medium text-muted-foreground">Тип сделки</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Кол-во акций</th>
                     <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Сумма</th>
-                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground whitespace-nowrap">Дата сделки</th>
+                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата раскрытия</th>
+                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата сделки</th>
                   </tr>
                 </thead>
                 <tbody>
