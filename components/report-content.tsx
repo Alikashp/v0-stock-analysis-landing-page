@@ -414,7 +414,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
       )}
 
       {/* Insider Trades */}      
-      {Array.isArray(data.insider_trades) && (.length > 0 && (
+      {Array.isArray(data.insider_trades) && (
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
