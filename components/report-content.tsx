@@ -48,17 +48,10 @@ interface AnalysisData {
     shares: number | string;
     value: number | string;
     date: string;
-  }>;
+  }>;  
   politician_trades?: Array<{
-    name: string;
     senator: string;
     party: string;
-    chamber: string;
-    transaction: string;
-    amount_range: number | string;
-    trade_date: string;
-    disclosure_date: string;
-    ticker?: string;
     transaction_date: string;
     owner: string;
     asset_description: string;
@@ -428,7 +421,6 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       )}
-
       {/* Insider Trades */}      
       {Array.isArray(data.insider_trades) && (
         <Card className="bg-card border-border">
@@ -444,16 +436,11 @@ export function ReportContent({ ticker }: ReportContentProps) {
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="py-2 pr-4 font-medium text-muted-foreground">Имя</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Сенатор</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Партия</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Палата</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Владелец</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Актив</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Должность</th>
                     <th className="py-2 pr-4 font-medium text-muted-foreground">Тип сделки</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Кол-во акций</th>
                     <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Сумма</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground whitespace-nowrap">Дата сделки</th>
-                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата раскрытия</th>
-                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата сделки</th>
+                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -479,6 +466,54 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       )}
+      {/* Politician Trades */}
+      {Array.isArray(data.politician_trades) && data.politician_trades.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Users className="h-5 w-5 text-primary" />
+              Сделки политиков
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Сенатор</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Партия</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Владелец</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Актив</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Тип сделки</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Сумма</th>
+                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата сделки</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.politician_trades.map((trade, index) => {
+                    const isBuy = /buy|покуп/i.test(trade.type);
+                    const isSell = /sell|прод/i.test(trade.type);
+                    return (
+                      <tr key={index} className="border-b border-border last:border-0">
+                        <td className="py-3 pr-4 text-foreground">{trade.senator}</td>
+                        <td className="py-3 pr-4 text-muted-foreground">{trade.party}</td>
+                        <td className="py-3 pr-4 text-muted-foreground">{trade.owner}</td>
+                        <td className="py-3 pr-4 text-muted-foreground">{trade.asset_description}</td>
+                        <td className={`py-3 pr-4 font-medium ${isBuy ? "text-chart-1" : isSell ? "text-chart-4" : "text-foreground"}`}>
+                          {trade.type}
+                        </td>
+                        <td className="py-3 pr-4 text-right font-mono text-foreground">{trade.amount}</td>
+                        <td className="py-3 text-muted-foreground whitespace-nowrap">{trade.transaction_date}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Politician Trades */}
       {Array.isArray(data.politician_trades) && data.politician_trades.length > 0 && (
         <Card className="bg-card border-border">
