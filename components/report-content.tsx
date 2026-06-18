@@ -289,6 +289,14 @@ export function ReportContent({ ticker }: ReportContentProps) {
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} domain={["auto", "auto"]} />
                   <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      color: "var(--foreground)",
+                    }}
+                    labelStyle={{ color: "var(--muted-foreground)" }}
+                    itemStyle={{ color: "var(--chart-1)" }}
                     formatter={(value: number) => [`${currencySymbol}${value}`, "Цена"]}
                   />
                   <Line type="monotone" dataKey="price" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
@@ -315,7 +323,17 @@ export function ReportContent({ ticker }: ReportContentProps) {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="quarter" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value: number) => [`$${value}B`, "Выручка"]} />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      color: "var(--foreground)",
+                    }}
+                    labelStyle={{ color: "var(--muted-foreground)" }}
+                    itemStyle={{ color: "var(--chart-1)" }}
+                    formatter={(value: number) => [`$${value}B`, "Выручка"]}
+                  />
                   <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
