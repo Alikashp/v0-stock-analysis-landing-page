@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface AnalysisData {
   ticker: string;
@@ -67,6 +68,14 @@ interface AnalysisData {
     asset_description: string;
     type: string;
     amount: string;
+  }>;
+  price_history?: Array<{
+    date: string;
+    price: number;
+  }>;
+  revenue_history?: Array<{
+    quarter: string;
+    revenue: number;
   }>;
 }
 
@@ -262,6 +271,58 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Price History Chart */}
+      {Array.isArray(data.price_history) && data.price_history.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <LineChartIcon className="h-5 w-5 text-primary" />
+              История цены за год
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.price_history}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} domain={["auto", "auto"]} />
+                  <Tooltip
+                    formatter={(value: number) => [`${currencySymbol}${value}`, "Цена"]}
+                  />
+                  <Line type="monotone" dataKey="price" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Revenue History Chart */}
+      {Array.isArray(data.revenue_history) && data.revenue_history.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Квартальная выручка
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.revenue_history}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="quarter" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number) => [`$${value}B`, "Выручка"]} />
+                  <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* What Is Happening */}
       <Card className="bg-card border-border">
