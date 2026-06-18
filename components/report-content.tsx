@@ -16,9 +16,14 @@ interface AnalysisData {
     week_52_high?: number;
     week_52_low?: number;
     currency_symbol?: string;
-  };
-  report?: {
-    executive_summary?: string;
+  };report?: {
+    what_is_happening?: string;
+    main_catalyst?: string;
+    main_risk?: string;
+    scenarios?: {
+      optimistic?: string;
+      pessimistic?: string;
+    };
     bull_case?: string[];
     bear_case?: string[];
     swot?: {
@@ -31,11 +36,16 @@ interface AnalysisData {
       score?: number;
       growth_rating?: string;
       profitability_rating?: string;
+      cashflow_rating?: string;
+      comment?: string;
     };
     fair_value?: {
       estimate?: number;
       upside_pct?: number;
+      methodology?: string;
     };
+    interest_level?: string;
+    interest_reason?: string;
   };
   news?: Array<{
     title: string;
@@ -252,18 +262,90 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Executive Summary */}
+      
+      {/* What Is Happening */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Резюме</CardTitle>
+          <CardTitle className="text-foreground">Что происходит</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground leading-relaxed">
-            {data.report?.executive_summary}
-          </p>
+          <div className="space-y-4">
+            {(data.report?.what_is_happening ?? "").split("\n").filter(Boolean).map((paragraph, index) => (
+              <p key={index} className="text-muted-foreground leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Interest Level */}
+      {data.report?.interest_level && (
+        <Card className="bg-card border-border">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-4">
+              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
+                {data.report.interest_level}
+              </span>
+              <p className="text-sm text-muted-foreground text-right">{data.report.interest_reason}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Catalyst & Main Risk */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-chart-1">
+              <TrendingUp className="h-5 w-5" />
+              Главный катализатор
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{data.report?.main_catalyst}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-chart-4">
+              <TrendingDown className="h-5 w-5" />
+              Главный риск
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{data.report?.main_risk}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Scenarios */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-chart-1">
+              <TrendingUp className="h-5 w-5" />
+              Оптимистичный сценарий
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{data.report?.scenarios?.optimistic}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-chart-4">
+              <TrendingDown className="h-5 w-5" />
+              Пессимистичный сценарий
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{data.report?.scenarios?.pessimistic}</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Bull & Bear Case */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -372,6 +454,13 @@ export function ReportContent({ ticker }: ReportContentProps) {
                 <span className="text-muted-foreground">Рентабельность</span>
                 <span className="font-semibold text-foreground">{data.report?.financial_health?.profitability_rating ?? "Н/Д"}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Денежный поток</span>
+                <span className="font-semibold text-foreground">{data.report?.financial_health?.cashflow_rating ?? "Н/Д"}</span>
+              </div>
+              {data.report?.financial_health?.comment && (
+                <p className="text-sm text-muted-foreground pt-2 border-t border-border">{data.report.financial_health.comment}</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -395,6 +484,9 @@ export function ReportContent({ ticker }: ReportContentProps) {
                   {formatPercent(data.report?.fair_value?.upside_pct)}
                 </span>
               </div>
+              {data.report?.fair_value?.methodology && (
+                <p className="text-sm text-muted-foreground pt-2 border-t border-border">{data.report.fair_value.methodology}</p>
+              )}
             </div>
           </CardContent>
         </Card>
