@@ -1,9 +1,109 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { supabase } from "@/lib/supabase";
+
+type AccessBlock = "anonymous_limit" | "paid_limit" | null;
+
+function getOrCreateSessionId(): string {
+  let sessionId = localStorage.getItem("session_id");
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("session_id", sessionId);
+  }
+  return sessionId;
+}
+
+async function checkAnonymousAccess(): Promise<boolean> {
+  const sessionId = getOrCreateSessionId();
+
+  const { data: session } = await supabase
+    .from("anonymous_sessions")
+    .select("analyses_count")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  if (!session) {
+    await supabase.from("anonymous_sessions").insert({ session_id: sessionId, analyses_count: 1 });
+    return true;
+  }
+
+  if (session.analyses_count >= 1) {
+    return false;
+  }
+
+  await supabase
+    .from("anonymous_sessions")
+    .update({ analyses_count: session.analyses_count + 1 })
+    .eq("session_id", sessionId);
+  return true;
+}
+
+async function checkRegisteredAccess(userId: string, email: string): Promise<boolean> {
+  const { data: profile } = await supabase
+    .from("users")
+    .select("analyses_count")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const count = profile?.analyses_count ?? 0;
+  if (count >= 7) {
+    return false;
+  }
+
+  if (profile) {
+    await supabase.from("users").update({ analyses_count: count + 1 }).eq("id", userId);
+  } else {
+    await supabase.from("users").insert({ id: userId, email, analyses_count: 1 });
+  }
+  return true;
+}
+
+function UpgradePrompt({ reason }: { reason: AccessBlock }) {
+  const isAnonymous = reason === "anonymous_limit";
+
+  return (
+    <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
+      <div className="p-4 rounded-full bg-primary/10">
+        <Lock className="h-10 w-10 text-primary" />
+      </div>
+      <div className="space-y-2 max-w-md">
+        <h2 className="text-2xl font-bold text-foreground">
+          {isAnonymous ? "Вы использовали бесплатный анализ" : "Лимит бесплатных анализов исчерпан"}
+        </h2>
+        <p className="text-muted-foreground">
+          {isAnonymous
+            ? "Зарегистрируйтесь чтобы получить 7 анализов в месяц бесплатно"
+            : "В этом месяце вы использовали все 7 бесплатных анализов. Перейдите на платный тариф, чтобы продолжить."}
+        </p>
+      </div>
+      {isAnonymous ? (
+        <div className="space-y-3">
+          <Button onClick={() => supabase.auth.signInWithOAuth({ provider: "google" })}>
+            Войти через Google
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Уже есть аккаунт?{" "}
+            <button
+              className="text-primary hover:underline"
+              onClick={() => supabase.auth.signInWithOAuth({ provider: "google" })}
+            >
+              Войти
+            </button>
+          </p>
+        </div>
+      ) : (
+        <Button onClick={() => console.log("[v0] Upgrade to paid plan clicked")}>
+          Перейти на платный тариф
+        </Button>
+      )}
+    </div>
+  );
+}
 
 interface AnalysisData {
   ticker: string;
@@ -17,7 +117,8 @@ interface AnalysisData {
     week_52_high?: number;
     week_52_low?: number;
     currency_symbol?: string;
-  };report?: {
+  };
+  report?: {
     what_is_happening?: string;
     main_catalyst?: string;
     main_risk?: string;
@@ -59,7 +160,7 @@ interface AnalysisData {
     shares: number | string;
     value: number | string;
     date: string;
-  }>;  
+  }>;
   politician_trades?: Array<{
     senator: string;
     party: string;
@@ -87,6 +188,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const [data, setData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessBlock, setAccessBlock] = useState<AccessBlock>(null);
 
   useEffect(() => {
     async function fetchAnalysis() {
@@ -134,8 +236,32 @@ export function ReportContent({ ticker }: ReportContentProps) {
       }
     }
 
-    fetchAnalysis();
+    async function checkAccessAndFetch() {
+      setLoading(true);
+      setAccessBlock(null);
+
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      const allowed = user
+        ? await checkRegisteredAccess(user.id, user.email ?? "")
+        : await checkAnonymousAccess();
+
+      if (!allowed) {
+        setAccessBlock(user ? "paid_limit" : "anonymous_limit");
+        setLoading(false);
+        return;
+      }
+
+      await fetchAnalysis();
+    }
+
+    checkAccessAndFetch();
   }, [ticker]);
+
+  if (accessBlock) {
+    return <UpgradePrompt reason={accessBlock} />;
+  }
 
   if (loading) {
     return (
@@ -323,7 +449,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="quarter" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--card)",
                       border: "1px solid var(--border)",
@@ -341,7 +467,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       )}
-      
+
       {/* What Is Happening */}
       <Card className="bg-card border-border">
         <CardHeader>
@@ -592,6 +718,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       )}
+
       {/* Insider Trades */}      
       {Array.isArray(data.insider_trades) && (
         <Card className="bg-card border-border">
