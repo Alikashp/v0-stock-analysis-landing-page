@@ -1,6 +1,7 @@
 import { Brain, Activity, Scale } from "lucide-react";
 import { TickerSearch } from "@/components/ticker-search";
 import { FeatureCard } from "@/components/feature-card";
+import { AuthButton } from "@/components/auth-button";
 
 export default function HomePage() {
   return (
@@ -23,6 +24,7 @@ export default function HomePage() {
               API
             </a>
           </nav>
+          <AuthButton />
         </div>
       </header>
 
