@@ -2,6 +2,7 @@ import { Activity, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ReportContent } from "@/components/report-content";
+import { AuthButton } from "@/components/auth-button";
 
 interface ReportPageProps {
   params: Promise<{ ticker: string }>;
@@ -19,12 +20,15 @@ export default async function ReportPage({ params }: ReportPageProps) {
             <Activity className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold text-foreground">StockAI</span>
           </Link>
-          <Button variant="ghost" asChild>
-            <Link href="/" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Новый анализ
-            </Link>
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link href="/" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Новый анализ
+              </Link>
+            </Button>
+            <AuthButton />
+          </div>
         </div>
       </header>
 
