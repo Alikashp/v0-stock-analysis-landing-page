@@ -21,14 +21,25 @@ function getOrCreateSessionId(): string {
 async function checkAnonymousAccess(): Promise<boolean> {
   const sessionId = getOrCreateSessionId();
 
-  const { data: session } = await supabase
+  const { data: session, error: selectError } = await supabase
     .from("anonymous_sessions")
     .select("analyses_count")
     .eq("session_id", sessionId)
     .maybeSingle();
 
+  if (selectError) {
+    console.log("[v0] checkAnonymousAccess select error:", selectError.message);
+    return false;
+  }
+
   if (!session) {
-    await supabase.from("anonymous_sessions").insert({ session_id: sessionId, analyses_count: 1 });
+    const { error: insertError } = await supabase
+      .from("anonymous_sessions")
+      .insert({ session_id: sessionId, analyses_count: 1 });
+    if (insertError) {
+      console.log("[v0] checkAnonymousAccess insert error:", insertError.message);
+      return false;
+    }
     return true;
   }
 
@@ -36,19 +47,28 @@ async function checkAnonymousAccess(): Promise<boolean> {
     return false;
   }
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("anonymous_sessions")
     .update({ analyses_count: session.analyses_count + 1 })
     .eq("session_id", sessionId);
+  if (updateError) {
+    console.log("[v0] checkAnonymousAccess update error:", updateError.message);
+    return false;
+  }
   return true;
 }
 
 async function checkRegisteredAccess(userId: string, email: string): Promise<boolean> {
-  const { data: profile } = await supabase
+  const { data: profile, error: selectError } = await supabase
     .from("users")
     .select("analyses_count")
     .eq("id", userId)
     .maybeSingle();
+
+  if (selectError) {
+    console.log("[v0] checkRegisteredAccess select error:", selectError.message);
+    return false;
+  }
 
   const count = profile?.analyses_count ?? 0;
   if (count >= 7) {
@@ -56,9 +76,22 @@ async function checkRegisteredAccess(userId: string, email: string): Promise<boo
   }
 
   if (profile) {
-    await supabase.from("users").update({ analyses_count: count + 1 }).eq("id", userId);
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ analyses_count: count + 1 })
+      .eq("id", userId);
+    if (updateError) {
+      console.log("[v0] checkRegisteredAccess update error:", updateError.message);
+      return false;
+    }
   } else {
-    await supabase.from("users").insert({ id: userId, email, analyses_count: 1 });
+    const { error: insertError } = await supabase
+      .from("users")
+      .insert({ id: userId, email, analyses_count: 1 });
+    if (insertError) {
+      console.log("[v0] checkRegisteredAccess insert error:", insertError.message);
+      return false;
+    }
   }
   return true;
 }
@@ -152,6 +185,7 @@ interface AnalysisData {
   news?: Array<{
     title: string;
     date: string;
+    link?: string;
   }>;
   insider_trades?: Array<{
     name: string;
@@ -488,11 +522,11 @@ export function ReportContent({ ticker }: ReportContentProps) {
       {data.report?.interest_level && (
         <Card className="bg-card border-border">
           <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-4">
-              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <span className="self-start px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
                 {data.report.interest_level}
               </span>
-              <p className="text-sm text-muted-foreground text-right">{data.report.interest_reason}</p>
+              <p className="text-sm text-muted-foreground sm:text-right">{data.report.interest_reason}</p>
             </div>
           </CardContent>
         </Card>
@@ -636,6 +670,52 @@ export function ReportContent({ ticker }: ReportContentProps) {
         </CardContent>
       </Card>
 
+      {/* Insider Trades */}
+      {Array.isArray(data.insider_trades) && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Users className="h-5 w-5 text-primary" />
+              Сделки инсайдеров
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Имя</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Должность</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Тип сделки</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Кол-во акций</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Сумма</th>
+                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.insider_trades.map((trade, index) => {
+                    const isBuy = /buy|покуп/i.test(trade.transaction);
+                    const isSell = /sell|прод/i.test(trade.transaction);
+                    return (
+                      <tr key={index} className="border-b border-border last:border-0">
+                        <td className="py-3 pr-4 text-foreground">{trade.name}</td>
+                        <td className="py-3 pr-4 text-muted-foreground">{trade.title}</td>
+                        <td className={`py-3 pr-4 font-medium ${isBuy ? "text-chart-1" : isSell ? "text-chart-4" : "text-foreground"}`}>
+                          {trade.transaction}
+                        </td>
+                        <td className="py-3 pr-4 text-right font-mono text-foreground">{formatTradeNumber(trade.shares)}</td>
+                        <td className="py-3 pr-4 text-right font-mono text-foreground">{formatTradeNumber(trade.value, currencySymbol)}</td>
+                        <td className="py-3 text-muted-foreground whitespace-nowrap">{trade.date}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Financial Health & Fair Value */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="bg-card border-border">
@@ -710,57 +790,22 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <ul className="space-y-3">
               {data.news.map((item, index) => (
                 <li key={index} className="flex items-start justify-between gap-4 pb-3 border-b border-border last:border-0 last:pb-0">
-                  <p className="text-sm text-muted-foreground">{item.title}</p>
+                  {item.link ? (
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+                    >
+                      {item.title}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{item.title}</p>
+                  )}
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{item.date}</span>
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Insider Trades */}      
-      {Array.isArray(data.insider_trades) && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Users className="h-5 w-5 text-primary" />
-              Сделки инсайдеров
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Имя</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Должность</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground">Тип сделки</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Кол-во акций</th>
-                    <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Сумма</th>
-                    <th className="py-2 font-medium text-muted-foreground whitespace-nowrap">Дата</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.insider_trades.map((trade, index) => {
-                    const isBuy = /buy|покуп/i.test(trade.transaction);
-                    const isSell = /sell|прод/i.test(trade.transaction);
-                    return (
-                      <tr key={index} className="border-b border-border last:border-0">
-                        <td className="py-3 pr-4 text-foreground">{trade.name}</td>
-                        <td className="py-3 pr-4 text-muted-foreground">{trade.title}</td>
-                        <td className={`py-3 pr-4 font-medium ${isBuy ? "text-chart-1" : isSell ? "text-chart-4" : "text-foreground"}`}>
-                          {trade.transaction}
-                        </td>
-                        <td className="py-3 pr-4 text-right font-mono text-foreground">{formatTradeNumber(trade.shares)}</td>
-                        <td className="py-3 pr-4 text-right font-mono text-foreground">{formatTradeNumber(trade.value, currencySymbol)}</td>
-                        <td className="py-3 text-muted-foreground whitespace-nowrap">{trade.date}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
           </CardContent>
         </Card>
       )}
