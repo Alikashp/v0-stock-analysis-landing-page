@@ -225,7 +225,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const [accessBlock, setAccessBlock] = useState<AccessBlock>(null);
 
   useEffect(() => {
-    async function fetchAnalysis() {
+    async function fetchAnalysis(userId: string | null) {
       try {
         setLoading(true);
         setError(null);
@@ -262,6 +262,13 @@ export function ReportContent({ ticker }: ReportContentProps) {
         setData(result);
         console.log("insider_trades:", result.insider_trades);
         console.log("все ключи:", Object.keys(result));
+
+        const { error: saveError } = await supabase
+          .from("analyses")
+          .insert({ user_id: userId, ticker: ticker.toUpperCase(), report: result });
+        if (saveError) {
+          console.log("[v0] save analysis history error:", saveError.message);
+        }
       } catch (err) {
         console.log("[v0] Fetch error:", err instanceof Error ? err.message : err);
         setError("Ошибка загрузки. Попробуйте снова.");
@@ -287,7 +294,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
         return;
       }
 
-      await fetchAnalysis();
+      await fetchAnalysis(user?.id ?? null);
     }
 
     checkAccessAndFetch();
