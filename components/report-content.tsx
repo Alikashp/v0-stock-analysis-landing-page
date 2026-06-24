@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,13 +62,17 @@ async function checkAnonymousAccess(): Promise<boolean> {
 async function checkRegisteredAccess(userId: string, email: string): Promise<boolean> {
   const { data: profile, error: selectError } = await supabase
     .from("users")
-    .select("analyses_count")
+    .select("analyses_count, plan")
     .eq("id", userId)
     .maybeSingle();
 
   if (selectError) {
     console.log("[v0] checkRegisteredAccess select error:", selectError.message);
     return false;
+  }
+
+  if (profile?.plan === "pro") {
+    return true;
   }
 
   const count = profile?.analyses_count ?? 0;
@@ -130,9 +135,9 @@ function UpgradePrompt({ reason }: { reason: AccessBlock }) {
           </p>
         </div>
       ) : (
-        <Button onClick={() => console.log("[v0] Upgrade to paid plan clicked")}>
-          Перейти на платный тариф
-        </Button>
+        <Link href="/pricing">
+          <Button>Перейти на платный тариф</Button>
+        </Link>
       )}
     </div>
   );

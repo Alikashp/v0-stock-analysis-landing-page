@@ -17,10 +17,14 @@ export default function HomePage() {
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
               Функции
             </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Цены
             </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a
+              href="mailto:alikaspagina758@gmail.com"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="Напишите по поводу API на почту alikaspagina758@gmail.com"
+            >
               API
             </a>
           </nav>
