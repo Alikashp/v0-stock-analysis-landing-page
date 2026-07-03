@@ -174,9 +174,9 @@ interface AnalysisData {
     };
     financial_health?: {
       score?: number;
-      growth_rating?: string;
-      profitability_rating?: string;
-      cashflow_rating?: string;
+      growth_rating?: number;
+      profitability_rating?: number;
+      cashflow_rating?: number;
       comment?: string;
     };
     fair_value?: {
@@ -209,6 +209,12 @@ interface AnalysisData {
     type: string;
     amount: string;
   }>;
+  analyst_ratings?: Array<{
+    firm: string;
+    to_grade: string;
+    action: string;
+    date: string;
+  }>;
   price_history?: Array<{
     date: string;
     price: number;
@@ -221,6 +227,54 @@ interface AnalysisData {
 
 interface ReportContentProps {
   ticker: string;
+}
+
+function ratingBarColor(value: number): string {
+  if (value <= 4) return "bg-red-500";
+  if (value <= 6) return "bg-orange-500";
+  if (value <= 8) return "bg-yellow-500";
+  return "bg-green-500";
+}
+
+function RatingBar({ label, value }: { label: string; value: number | undefined }) {
+  const safeValue = typeof value === "number" && !Number.isNaN(value) ? Math.min(10, Math.max(0, value)) : 0;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-mono font-semibold text-foreground">{value ?? "Н/Д"}/10</span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-2 rounded-full ${ratingBarColor(safeValue)}`}
+          style={{ width: `${(safeValue / 10) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+const GRADE_TRANSLATIONS: Record<string, string> = {
+  Buy: "Buy",
+  Hold: "Hold",
+  Sell: "Sell",
+  Overweight: "Overweight",
+  Underweight: "Underweight",
+  "Strong Buy": "Strong Buy",
+  Outperform: "Outperform",
+  Underperform: "Underperform",
+  Neutral: "Neutral",
+};
+
+function ratingColor(grade: string): string {
+  const normalized = grade.toLowerCase();
+  if (normalized.includes("buy") || normalized.includes("outperform") || normalized.includes("overweight")) {
+    return "text-yellow-500";
+  }
+  if (normalized.includes("sell") || normalized.includes("underperform") || normalized.includes("underweight")) {
+    return "text-red-500";
+  }
+  return "text-muted-foreground";
 }
 
 export function ReportContent({ ticker }: ReportContentProps) {
@@ -334,7 +388,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
 
   const formatMarketCap = (value: number | string | null | undefined, currencySymbol: string): string => {
     if (value === null || value === undefined) return "Н/Д";
-    
+
     // If already formatted as a string (e.g., "$4.58T"), return as-is
     if (typeof value === "string") {
       if (value.includes("T") || value.includes("B") || value.includes("M") || value.includes("трлн") || value.includes("млрд") || value.includes("млн")) {
@@ -345,7 +399,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
       if (isNaN(parsed)) return value;
       value = parsed;
     }
-    
+
     // Format raw number with appropriate suffix based on currency
     const isRuble = currencySymbol === "₽";
     if (value >= 1e12) {
@@ -382,6 +436,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const swotWeaknesses = data.report?.swot?.weaknesses ?? [];
   const swotOpportunities = data.report?.swot?.opportunities ?? [];
   const swotThreats = data.report?.swot?.threats ?? [];
+  const analystRatings = (data.analyst_ratings ?? []).slice(0, 10);
 
   return (
     <div className="space-y-8">
@@ -738,23 +793,11 @@ export function ReportContent({ ticker }: ReportContentProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Общий балл</span>
-                <span className="text-2xl font-mono font-bold text-primary">{data.report?.financial_health?.score ?? "Н/Д"}/10</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Рейтинг роста</span>
-                <span className="font-semibold text-foreground">{data.report?.financial_health?.growth_rating ?? "Н/Д"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Рентабельность</span>
-                <span className="font-semibold text-foreground">{data.report?.financial_health?.profitability_rating ?? "Н/Д"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Денежный поток</span>
-                <span className="font-semibold text-foreground">{data.report?.financial_health?.cashflow_rating ?? "Н/Д"}</span>
-              </div>
+            <div className="space-y-5">
+              <RatingBar label="Общий балл" value={data.report?.financial_health?.score} />
+              <RatingBar label="Рост" value={data.report?.financial_health?.growth_rating} />
+              <RatingBar label="Рентабельность" value={data.report?.financial_health?.profitability_rating} />
+              <RatingBar label="Денежный поток" value={data.report?.financial_health?.cashflow_rating} />
               {data.report?.financial_health?.comment && (
                 <p className="text-sm text-muted-foreground pt-2 border-t border-border">{data.report.financial_health.comment}</p>
               )}
@@ -788,6 +831,44 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analyst Ratings */}
+      {analystRatings.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Target className="h-5 w-5 text-primary" />
+              Рейтинги аналитиков
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 pr-4 font-medium text-muted-foreground whitespace-nowrap">Дата</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Банк</th>
+                    <th className="py-2 pr-4 font-medium text-muted-foreground">Рейтинг</th>
+                    <th className="py-2 font-medium text-muted-foreground">Действие</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analystRatings.map((rating, index) => (
+                    <tr key={index} className="border-b border-border last:border-0">
+                      <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap">{rating.date}</td>
+                      <td className="py-3 pr-4 text-foreground">{rating.firm}</td>
+                      <td className={`py-3 pr-4 font-medium ${ratingColor(rating.to_grade)}`}>
+                        {GRADE_TRANSLATIONS[rating.to_grade] ?? rating.to_grade}
+                      </td>
+                      <td className="py-3 text-muted-foreground">{rating.action}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Latest News */}
       {data.news && data.news.length > 0 && (
@@ -871,7 +952,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
 
       {/* Disclaimer */}
       <p className="text-xs text-muted-foreground text-center">
-        Данный анализ сгенерирован искусственным интеллектом и предназначен только для информационных целей. 
+        Данный анализ сгенерирован искусственным интеллектом и предназначен только для информационных целей.
         Не является финансовой рекомендацией. Всегда проводите собственное исследование.
       </p>
     </div>
