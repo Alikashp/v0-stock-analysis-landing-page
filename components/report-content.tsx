@@ -232,6 +232,10 @@ interface AnalysisData {
     date: string;
     price: number;
   }>;
+  price_history_multi?: Record<string, {
+    data: Array<{ date: string; price: number }>;
+    change_pct: number | null;
+  }>;
   revenue_history?: Array<{
     quarter: string;
     revenue: number;
@@ -295,6 +299,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessBlock, setAccessBlock] = useState<AccessBlock>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("1y");
 
   useEffect(() => {
     async function fetchAnalysis(userId: string | null) {
@@ -531,40 +536,88 @@ export function ReportContent({ ticker }: ReportContentProps) {
       </Card>
 
       {/* Price History Chart */}
-      {Array.isArray(data.price_history) && data.price_history.length > 0 && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <LineChartIcon className="h-5 w-5 text-primary" />
-              История цены за год
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data.price_history}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} domain={["auto", "auto"]} />
-                  <Tooltip
-                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      color: "var(--foreground)",
-                    }}
-                    labelStyle={{ color: "var(--muted-foreground)" }}
-                    itemStyle={{ color: "var(--chart-1)" }}
-                    formatter={(value: number) => [`${currencySymbol}${value}`, "Цена"]}
-                  />
-                  <Line type="monotone" dataKey="price" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {data.price_history_multi && Object.keys(data.price_history_multi).length > 0 && (() => {
+        const tabs = [
+          { key: "1d",  label: "1Д" },
+          { key: "5d",  label: "5Д" },
+          { key: "1m",  label: "1М" },
+          { key: "6m",  label: "6М" },
+          { key: "1y",  label: "1Г" },
+          { key: "5y",  label: "5Л" },
+          { key: "10y", label: "10Л" },
+          { key: "all", label: "Всё" },
+        ];
+        const phm = data.price_history_multi!;
+        const current = phm[selectedPeriod] ?? { data: [], change_pct: null };
+        const chartData = current.data;
+        const changePct = current.change_pct;
+        return (
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <LineChartIcon className="h-5 w-5 text-primary" />
+                История цены
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Tab buttons */}
+              <div className="flex flex-wrap gap-1 mb-4">
+                {tabs.map(({ key, label }) => {
+                  const tab = phm[key];
+                  const pct = tab?.change_pct;
+                  const isActive = selectedPeriod === key;
+                  const isPos = pct !== null && pct !== undefined && pct >= 0;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedPeriod(key)}
+                      className={`flex flex-col items-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
+                        isActive
+                          ? "bg-yellow-500/20 border-yellow-500 text-yellow-400"
+                          : "border-border text-muted-foreground hover:border-yellow-500/50 hover:text-foreground"
+                      }`}
+                    >
+                      <span>{label}</span>
+                      {pct !== null && pct !== undefined && (
+                        <span className={`text-[10px] font-mono leading-tight ${isPos ? "text-green-400" : "text-red-400"}`}>
+                          {isPos ? "+" : ""}{pct}%
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Chart */}
+              <div className="h-64">
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
+                      <Tooltip
+                        cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1 }}
+                        contentStyle={{
+                          backgroundColor: "var(--card)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "8px",
+                          color: "var(--foreground)",
+                        }}
+                        labelStyle={{ color: "var(--muted-foreground)" }}
+                        itemStyle={{ color: "var(--chart-1)" }}
+                        formatter={(value: number) => [`${currencySymbol}${value}`, "Цена"]}
+                      />
+                      <Line type="monotone" dataKey="price" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground text-sm">Нет данных</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Revenue History Chart */}
       {Array.isArray(data.revenue_history) && data.revenue_history.length > 0 && (
