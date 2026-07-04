@@ -5,7 +5,7 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { supabase } from "@/lib/supabase";
 
 type AccessBlock = "anonymous_limit" | "paid_limit" | null;
@@ -150,6 +150,7 @@ interface AnalysisData {
     market_cap?: number | string;
     pe_ratio?: number | null;
     pe_forward?: number | null;
+    price_to_sales?: number | null;
     eps_actual?: number | null;
     dividend_yield?: number | null;
     week_52_high?: number;
@@ -209,6 +210,18 @@ interface AnalysisData {
     type: string;
     amount: string;
   }>;
+  annual_financials?: Array<{
+    year: string;
+    revenue: number | null;
+    net_income: number | null;
+  }>;
+  recommendation_trend?: {
+    strong_buy?: number;
+    buy?: number;
+    hold?: number;
+    sell?: number;
+    strong_sell?: number;
+  };
   analyst_ratings?: Array<{
     firm: string;
     to_grade: string;
@@ -480,6 +493,10 @@ export function ReportContent({ ticker }: ReportContentProps) {
               <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.pe_forward)}</p>
             </div>
             <div className="space-y-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">P/S</p>
+              <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.price_to_sales)}</p>
+            </div>
+            <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">EPS (факт)</p>
               <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.eps_actual, currencySymbol)}</p>
             </div>
@@ -568,6 +585,93 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Annual Financials Chart */}
+      {Array.isArray(data.annual_financials) && data.annual_financials.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Годовая динамика
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.annual_financials}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      color: "var(--foreground)",
+                    }}
+                    formatter={(value: number) => [`$${value}B`, ""]}
+                  />
+                  <Legend formatter={(v) => v === "revenue" ? "Выручка" : "Чистая прибыль"} />
+                  <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="net_income" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recommendation Trend */}
+      {data.recommendation_trend && Object.keys(data.recommendation_trend).length > 0 && (() => {
+        const rt = data.recommendation_trend!;
+        const total = (rt.strong_buy ?? 0) + (rt.buy ?? 0) + (rt.hold ?? 0) + (rt.sell ?? 0) + (rt.strong_sell ?? 0);
+        if (total === 0) return null;
+        const chartData = [{ name: "Аналитики", strong_buy: rt.strong_buy ?? 0, buy: rt.buy ?? 0, hold: rt.hold ?? 0, sell: rt.sell ?? 0, strong_sell: rt.strong_sell ?? 0 }];
+        return (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Users className="h-5 w-5 text-primary" />
+                Консенсус аналитиков
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={chartData} margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" hide />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        color: "var(--foreground)",
+                      }}
+                      formatter={(value: number, name: string) => {
+                        const labels: Record<string, string> = { strong_buy: "Strong Buy", buy: "Buy", hold: "Hold", sell: "Sell", strong_sell: "Strong Sell" };
+                        return [value, labels[name] ?? name];
+                      }}
+                    />
+                    <Bar dataKey="strong_buy" stackId="a" fill="#22c55e" radius={[4, 0, 0, 4]} />
+                    <Bar dataKey="buy" stackId="a" fill="#eab308" />
+                    <Bar dataKey="hold" stackId="a" fill="#6b7280" />
+                    <Bar dataKey="sell" stackId="a" fill="#f97316" />
+                    <Bar dataKey="strong_sell" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+                {rt.strong_buy ? <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-green-500" />Strong Buy: {rt.strong_buy}</span> : null}
+                {rt.buy ? <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-yellow-500" />Buy: {rt.buy}</span> : null}
+                {rt.hold ? <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-gray-500" />Hold: {rt.hold}</span> : null}
+                {rt.sell ? <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-orange-500" />Sell: {rt.sell}</span> : null}
+                {rt.strong_sell ? <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-500" />Strong Sell: {rt.strong_sell}</span> : null}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* What Is Happening */}
       <Card className="bg-card border-border">
