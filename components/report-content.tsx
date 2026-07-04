@@ -512,6 +512,20 @@ export function ReportContent({ ticker }: ReportContentProps) {
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Мин. 52 нед.</p>
               <p className="text-xl font-mono font-semibold text-chart-4">{formatNumber(data.key_indicators?.week_52_low, currencySymbol)}</p>
             </div>
+            {data.report?.fair_value?.estimate && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Fair Value</p>
+                <p className="text-xl font-mono font-semibold text-foreground">{currencySymbol}{data.report.fair_value.estimate.toLocaleString()}</p>
+              </div>
+            )}
+            {data.report?.fair_value?.upside_pct !== undefined && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Потенциал</p>
+                <p className={`text-xl font-mono font-semibold ${(data.report.fair_value.upside_pct ?? 0) >= 0 ? "text-chart-1" : "text-chart-4"}`}>
+                  {formatPercent(data.report.fair_value.upside_pct)}
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -533,6 +547,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} domain={["auto", "auto"]} />
                   <Tooltip
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
                     contentStyle={{
                       backgroundColor: "var(--card)",
                       border: "1px solid var(--border)",
@@ -577,6 +592,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                     labelStyle={{ color: "var(--muted-foreground)" }}
                     itemStyle={{ color: "var(--chart-1)" }}
                     formatter={(value: number) => [`$${value}B`, "Выручка"]}
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
                   />
                   <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -610,6 +626,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                       color: "var(--foreground)",
                     }}
                     formatter={(value: number) => [`$${value}B`, ""]}
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
                   />
                   <Legend formatter={(v) => v === "revenue" ? "Выручка" : "Чистая прибыль"} />
                   <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
@@ -652,6 +669,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                         const labels: Record<string, string> = { strong_buy: "Strong Buy", buy: "Buy", hold: "Hold", sell: "Sell", strong_sell: "Strong Sell" };
                         return [value, labels[name] ?? name];
                       }}
+                      cursor={{ fill: "rgba(255,255,255,0.04)" }}
                     />
                     <Bar dataKey="strong_buy" stackId="a" fill="#22c55e" radius={[4, 0, 0, 4]} />
                     <Bar dataKey="buy" stackId="a" fill="#eab308" />
