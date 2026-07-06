@@ -1002,8 +1002,8 @@ export function ReportContent({ ticker }: ReportContentProps) {
         </Card>
       )}
 
-      {/* Earnings Call Analysis */}
-      <Card className="bg-card border-border">
+      {/* Earnings Call Analysis — временно скрыто (FMP платный план) */}
+      {false && <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Newspaper className="h-5 w-5 text-primary" />
@@ -1103,7 +1103,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Financial Health & Fair Value */}
       <div className="grid md:grid-cols-2 gap-6">
