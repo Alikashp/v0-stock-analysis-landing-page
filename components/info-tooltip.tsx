@@ -50,8 +50,12 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
             textTransform: "none",
             letterSpacing: "normal",
             fontWeight: "normal",
+            width: "256px",
+            maxWidth: "calc(100vw - 16px)",
+            wordBreak: "break-word",
+            whiteSpace: "normal",
           }}
-          className="w-64 rounded-lg border border-yellow-500/60 bg-zinc-900 px-3 py-2 text-[13px] text-zinc-200 shadow-xl"
+          className="rounded-lg border border-yellow-500/60 bg-zinc-900 px-3 py-2 text-[13px] text-zinc-200 shadow-xl"
         >
           {text}
           <span className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-yellow-500/60" />
