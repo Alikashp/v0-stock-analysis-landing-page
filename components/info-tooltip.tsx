@@ -14,9 +14,12 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
   function handleMouseEnter() {
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
+      const tooltipWidth = 256;
+      const rawLeft = rect.left + rect.width / 2;
+      const clampedLeft = Math.max(tooltipWidth / 2 + 8, Math.min(rawLeft, window.innerWidth - tooltipWidth / 2 - 8));
       setPos({
         top: rect.top - 8,
-        left: rect.left + rect.width / 2,
+        left: clampedLeft,
       });
     }
     setOpen(true);
