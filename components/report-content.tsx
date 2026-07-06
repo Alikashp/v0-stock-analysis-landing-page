@@ -241,6 +241,23 @@ interface AnalysisData {
     quarter: string;
     revenue: number;
   }>;
+  earnings_transcript_available?: boolean;
+}
+
+interface EarningsAnalysis {
+  key_themes: Array<{
+    title: string;
+    description: string;
+    quote_en: string;
+    quote_ru: string;
+  }>;
+  management_tone: string;
+  guidance_credibility: string;
+  key_risks_mentioned: string[];
+  qa_highlights: Array<{
+    analyst_question: string;
+    management_response: string;
+  }>;
 }
 
 interface ReportContentProps {
@@ -301,6 +318,10 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const [error, setError] = useState<string | null>(null);
   const [accessBlock, setAccessBlock] = useState<AccessBlock>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("1y");
+  const [earningsAnalysis, setEarningsAnalysis] = useState<EarningsAnalysis | null>(null);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+  const [earningsError, setEarningsError] = useState<string | null>(null);
+  const [earningsDate, setEarningsDate] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchAnalysis(userId: string | null) {
@@ -377,6 +398,23 @@ export function ReportContent({ ticker }: ReportContentProps) {
 
     checkAccessAndFetch();
   }, [ticker]);
+
+  async function fetchEarningsAnalysis() {
+    setEarningsLoading(true);
+    setEarningsError(null);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${baseUrl}/earnings-call/${ticker.toUpperCase()}`, { method: "POST" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const json = await res.json();
+      setEarningsAnalysis(json.analysis);
+      setEarningsDate(json.transcript_date ?? null);
+    } catch {
+      setEarningsError("Не удалось загрузить анализ звонка. Попробуйте позже.");
+    } finally {
+      setEarningsLoading(false);
+    }
+  }
 
   if (accessBlock) {
     return <UpgradePrompt reason={accessBlock} />;
@@ -963,6 +1001,109 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Earnings Call Analysis */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Newspaper className="h-5 w-5 text-primary" />
+            Анализ звонка с инвесторами
+            {earningsDate && (
+              <span className="ml-auto text-xs font-normal text-muted-foreground">{earningsDate}</span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!earningsAnalysis && !earningsLoading && !earningsError && (
+            data.earnings_transcript_available === false ? (
+              <p className="text-sm text-muted-foreground">Транскрипт последнего звонка недоступен для этого тикера.</p>
+            ) : (
+              <button
+                onClick={fetchEarningsAnalysis}
+                className="px-5 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-semibold text-sm transition-colors"
+              >
+                Проанализировать звонок
+              </button>
+            )
+          )}
+
+          {earningsLoading && (
+            <div className="flex items-center gap-3 text-muted-foreground text-sm">
+              <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
+              Анализируем звонок с инвесторами...
+            </div>
+          )}
+
+          {earningsError && (
+            <p className="text-sm text-destructive">{earningsError}</p>
+          )}
+
+          {earningsAnalysis && (
+            <div className="space-y-6">
+              {/* Ключевые темы */}
+              <div>
+                <h4 className="font-semibold text-foreground mb-3">Ключевые темы</h4>
+                <div className="space-y-4">
+                  {earningsAnalysis.key_themes.map((theme, i) => (
+                    <div key={i} className="p-4 rounded-lg bg-muted/30 border border-border space-y-1.5">
+                      <p className="font-semibold text-yellow-500">{theme.title}</p>
+                      <p className="text-sm text-foreground">{theme.description}</p>
+                      {theme.quote_en && (
+                        <p className="text-sm text-muted-foreground italic">«{theme.quote_en}»</p>
+                      )}
+                      {theme.quote_ru && (
+                        <p className="text-sm text-muted-foreground">{theme.quote_ru}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Тон и достоверность */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Тон менеджмента</p>
+                  <p className="text-sm text-foreground">{earningsAnalysis.management_tone}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Достоверность прогнозов</p>
+                  <p className="text-sm text-foreground">{earningsAnalysis.guidance_credibility}</p>
+                </div>
+              </div>
+
+              {/* Риски */}
+              {earningsAnalysis.key_risks_mentioned.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Риски со слов менеджмента</h4>
+                  <ul className="space-y-1.5">
+                    {earningsAnalysis.key_risks_mentioned.map((risk, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <span className="text-chart-4 mt-0.5">•</span>
+                        {risk}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Q&A */}
+              {earningsAnalysis.qa_highlights.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3">Вопросы аналитиков</h4>
+                  <div className="space-y-3">
+                    {earningsAnalysis.qa_highlights.map((qa, i) => (
+                      <div key={i} className="border-l-2 border-yellow-500/40 pl-3 space-y-1">
+                        <p className="text-sm text-muted-foreground italic">{qa.analyst_question}</p>
+                        <p className="text-sm text-foreground">{qa.management_response}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Financial Health & Fair Value */}
       <div className="grid md:grid-cols-2 gap-6">
