@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { supabase } from "@/lib/supabase";
+import { InfoTooltip } from "@/components/info-tooltip";
 
 type AccessBlock = "anonymous_limit" | "paid_limit" | null;
 
@@ -253,12 +254,12 @@ function ratingBarColor(value: number): string {
   return "bg-green-500";
 }
 
-function RatingBar({ label, value }: { label: string; value: number | undefined }) {
+function RatingBar({ label, value, tooltip }: { label: string; value: number | undefined; tooltip?: string }) {
   const safeValue = typeof value === "number" && !Number.isNaN(value) ? Math.min(10, Math.max(0, value)) : 0;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">{label}</span>
+        <span className="text-muted-foreground flex items-center gap-1">{label}{tooltip && <InfoTooltip text={tooltip} />}</span>
         <span className="font-mono font-semibold text-foreground">{value ?? "Н/Д"}/10</span>
       </div>
       <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -490,19 +491,19 @@ export function ReportContent({ ticker }: ReportContentProps) {
               <p className="text-xl font-mono font-semibold text-foreground">{formatMarketCap(data.key_indicators?.market_cap, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">P/E</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">P/E <InfoTooltip text="Цена акции / прибыль на акцию. Показывает, за сколько лет компания окупит себя при текущей прибыли." /></p>
               <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.pe_ratio)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Forward P/E</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">Forward P/E <InfoTooltip text="Цена акции / прогнозируемая будущая прибыль на акцию (в отличие от P/E, который считает по текущей прибыли)." /></p>
               <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.pe_forward)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">P/S</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">P/S <InfoTooltip text="Цена акции / выручка на акцию. Полезен для оценки компаний, которые пока не вышли в прибыль." /></p>
               <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.price_to_sales)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">EPS (факт)</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">EPS (факт) <InfoTooltip text="Чистая прибыль компании, делённая на количество акций в обращении." /></p>
               <p className="text-xl font-mono font-semibold text-foreground">{formatNumber(data.key_indicators?.eps_actual, currencySymbol)}</p>
             </div>
             <div className="space-y-1">
@@ -519,7 +520,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             </div>
             {data.report?.fair_value?.estimate && (
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Fair Value</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">Fair Value <InfoTooltip text="Ориентировочная справедливая цена, рассчитанная ИИ на основе мультипликаторов, темпов роста и прогнозов аналитиков. Не является финансовой рекомендацией." /></p>
                 <p className="text-xl font-mono font-semibold text-foreground">{currencySymbol}{data.report.fair_value.estimate.toLocaleString()}</p>
               </div>
             )}
@@ -769,8 +770,9 @@ export function ReportContent({ ticker }: ReportContentProps) {
         <Card className="bg-card border-border">
           <CardContent className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <span className="self-start px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
+              <span className="self-start flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
                 {data.report.interest_level}
+                <InfoTooltip text="Итоговый вывод ИИ на основе всех показателей — финансового здоровья, новостей и оценки аналитиков. Это ориентир для дальнейшего изучения, а не сигнал к покупке или продаже." />
               </span>
               <p className="text-sm text-muted-foreground sm:text-right">{data.report.interest_reason}</p>
             </div>
@@ -973,10 +975,10 @@ export function ReportContent({ ticker }: ReportContentProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
-              <RatingBar label="Общий балл" value={data.report?.financial_health?.score} />
-              <RatingBar label="Рост" value={data.report?.financial_health?.growth_rating} />
-              <RatingBar label="Рентабельность" value={data.report?.financial_health?.profitability_rating} />
-              <RatingBar label="Денежный поток" value={data.report?.financial_health?.cashflow_rating} />
+              <RatingBar label="Общий балл" value={data.report?.financial_health?.score} tooltip="Складывается из трёх составляющих: насколько быстро растёт бизнес, насколько он прибыльный и сколько свободных денег генерирует." />
+              <RatingBar label="Рост" value={data.report?.financial_health?.growth_rating} tooltip="Оценка на основе роста выручки и прибыли год к году. Рост выше 25% даёт максимальный балл." />
+              <RatingBar label="Рентабельность" value={data.report?.financial_health?.profitability_rating} tooltip="Оценка на основе маржи прибыли и доходности капитала (ROE) — насколько эффективно компания зарабатывает." />
+              <RatingBar label="Денежный поток" value={data.report?.financial_health?.cashflow_rating} tooltip="Оценка на основе свободного денежного потока и уровня долга — насколько устойчива компания финансово." />
               {data.report?.financial_health?.comment && (
                 <p className="text-sm text-muted-foreground pt-2 border-t border-border">{data.report.financial_health.comment}</p>
               )}
@@ -1018,6 +1020,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Target className="h-5 w-5 text-primary" />
               Рейтинги аналитиков
+              <InfoTooltip text="Консенсус-рекомендации от инвестиционных банков и брокеров за последние месяцы." />
             </CardTitle>
           </CardHeader>
           <CardContent>
