@@ -15,8 +15,8 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       setPos({
-        top: rect.top + window.scrollY - 8,
-        left: rect.left + rect.width / 2 + window.scrollX,
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
       });
     }
     setOpen(true);
