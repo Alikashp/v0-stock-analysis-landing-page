@@ -571,7 +571,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                     <button
                       key={key}
                       onClick={() => setSelectedPeriod(key)}
-                      className={`flex flex-col items-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
+                      className={`flex flex-col items-center px-3 py-2 rounded-md text-sm font-medium transition-colors border ${
                         isActive
                           ? "bg-yellow-500/20 border-yellow-500 text-yellow-400"
                           : "border-border text-muted-foreground hover:border-yellow-500/50 hover:text-foreground"
@@ -579,7 +579,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
                     >
                       <span>{label}</span>
                       {pct !== null && pct !== undefined && (
-                        <span className={`text-[10px] font-mono leading-tight ${isPos ? "text-green-400" : "text-red-400"}`}>
+                        <span className={`text-xs font-mono leading-tight ${isPos ? "text-green-400" : "text-red-400"}`}>
                           {isPos ? "+" : ""}{pct}%
                         </span>
                       )}
@@ -593,7 +593,11 @@ export function ReportContent({ ticker }: ReportContentProps) {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 11 }}
+                        interval={selectedPeriod === "1d" ? Math.floor(chartData.length / 6) : selectedPeriod === "5d" ? Math.floor(chartData.length / 8) : "preserveStartEnd"}
+                      />
                       <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
                       <Tooltip
                         cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1 }}
