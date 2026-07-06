@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 
 interface InfoTooltipProps {
   text: string;
@@ -11,18 +11,7 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (btnRef.current && !btnRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  function handleOpen() {
+  function handleMouseEnter() {
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       setPos({
@@ -30,7 +19,7 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
         left: rect.left + rect.width / 2 + window.scrollX,
       });
     }
-    setOpen((v) => !v);
+    setOpen(true);
   }
 
   return (
@@ -38,7 +27,8 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
       <button
         ref={btnRef}
         type="button"
-        onClick={handleOpen}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={() => setOpen(false)}
         className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-muted-foreground/40 text-muted-foreground hover:border-yellow-500 hover:text-yellow-500 transition-colors text-[10px] font-bold leading-none focus:outline-none"
         aria-label="Пояснение"
       >
@@ -54,6 +44,9 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
             transform: "translate(-50%, -100%)",
             zIndex: 9999,
             pointerEvents: "none",
+            textTransform: "none",
+            letterSpacing: "normal",
+            fontWeight: "normal",
           }}
           className="w-64 rounded-lg border border-yellow-500/60 bg-zinc-900 px-3 py-2 text-[13px] text-zinc-200 shadow-xl"
         >
