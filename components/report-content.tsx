@@ -404,30 +404,26 @@ export function ReportContent({ ticker }: ReportContentProps) {
     if (!data) return;
     setPdfLoading(true);
     try {
-      const element = document.getElementById("pdf-report-content");
-      if (!element) return;
-
-      const domtoimage = (await import("dom-to-image-more")).default;
-      const { default: jsPDF } = await import("jspdf");
-
-      const canvas = await domtoimage.toCanvas(element, {
-        scale: 2,
-        bgcolor: "#0a0a0a",
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${baseUrl}/generate-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key_indicators: data.key_indicators,
+          report: data.report,
+          insider_trades: data.insider_trades ?? [],
+          analyst_ratings: data.analyst_ratings ?? [],
+          news: data.news ?? [],
+        }),
       });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgH = (canvas.height / canvas.width) * pageW;
-
-      const totalPages = Math.ceil(imgH / pageH);
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, -i * pageH, pageW, imgH);
-      }
-
-      pdf.save(`${ticker.toUpperCase()}_report.pdf`);
+      if (!response.ok) throw new Error(`${response.status}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${ticker.toUpperCase()}_report.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF generation error:", err);
     } finally {
