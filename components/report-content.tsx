@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon, Lock } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, AlertCircle, DollarSign, BarChart3, Newspaper, Target, Users, LineChart as LineChartIcon, Lock, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -322,6 +322,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const [earningsLoading, setEarningsLoading] = useState(false);
   const [earningsError, setEarningsError] = useState<string | null>(null);
   const [earningsDate, setEarningsDate] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     async function fetchAnalysis(userId: string | null) {
@@ -398,6 +399,35 @@ export function ReportContent({ ticker }: ReportContentProps) {
 
     checkAccessAndFetch();
   }, [ticker]);
+
+  async function downloadPDF() {
+    if (!data) return;
+    setPdfLoading(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${baseUrl}/generate-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key_indicators: data.key_indicators,
+          report: data.report,
+          insider_trades: data.insider_trades ?? [],
+        }),
+      });
+      if (!response.ok) throw new Error(`${response.status}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${ticker.toUpperCase()}_report.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setPdfLoading(false);
+    }
+  }
 
   async function fetchEarningsAnalysis() {
     setEarningsLoading(true);
@@ -499,11 +529,22 @@ export function ReportContent({ ticker }: ReportContentProps) {
     <div className="space-y-8">
       {/* Ticker Header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-4xl font-bold font-mono text-foreground">{data.ticker}</h1>
           <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
             Анализ готов
           </span>
+          <button
+            onClick={downloadPDF}
+            disabled={pdfLoading}
+            className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {pdfLoading ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Формируем PDF...</>
+            ) : (
+              <><Download className="h-4 w-4" />Скачать PDF</>
+            )}
+          </button>
         </div>
         <p className="text-muted-foreground">
           ИИ-отчёт по акции {data.ticker}
