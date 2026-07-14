@@ -404,24 +404,21 @@ export function ReportContent({ ticker }: ReportContentProps) {
     if (!data) return;
     setPdfLoading(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${baseUrl}/generate-pdf`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key_indicators: data.key_indicators,
-          report: data.report,
-          insider_trades: data.insider_trades ?? [],
-        }),
-      });
-      if (!response.ok) throw new Error(`${response.status}`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${ticker.toUpperCase()}_report.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      const element = document.getElementById("pdf-report-content");
+      if (!element) throw new Error("Report element not found");
+      // @ts-expect-error no types for html2pdf.js
+      const html2pdf = (await import("html2pdf.js")).default;
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename: `${ticker.toUpperCase()}_report.pdf`,
+          image: { type: "jpeg", quality: 0.95 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#0a0a0a" },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: ["avoid-all", "css"] },
+        })
+        .from(element)
+        .save();
     } catch (err) {
       console.error("PDF generation error:", err);
     } finally {
@@ -526,7 +523,7 @@ export function ReportContent({ ticker }: ReportContentProps) {
   const analystRatings = (data.analyst_ratings ?? []).slice(0, 10);
 
   return (
-    <div className="space-y-8">
+    <div id="pdf-report-content" className="space-y-8">
       {/* Ticker Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3 flex-wrap">
