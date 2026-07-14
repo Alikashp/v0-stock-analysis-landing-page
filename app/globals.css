@@ -124,3 +124,64 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  /* Hide everything by default */
+  body > * {
+    display: none !important;
+  }
+
+  /* Show only the report container */
+  body #__next,
+  body #__next > *,
+  #pdf-report-content,
+  #pdf-report-content * {
+    display: revert !important;
+    visibility: visible !important;
+  }
+
+  /* Position report at top-left */
+  #pdf-report-content {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    color: black !important;
+    padding: 16px !important;
+  }
+
+  /* Light background for cards */
+  #pdf-report-content .bg-card,
+  #pdf-report-content [class*="bg-"] {
+    background: white !important;
+    border-color: #e0e0e0 !important;
+  }
+
+  /* Dark text */
+  #pdf-report-content * {
+    color: #111 !important;
+    border-color: #e0e0e0 !important;
+  }
+
+  /* Keep accent colors for ratings etc */
+  #pdf-report-content .text-green-500,
+  #pdf-report-content .text-green-400 { color: #16a34a !important; }
+  #pdf-report-content .text-red-500,
+  #pdf-report-content .text-red-400   { color: #dc2626 !important; }
+  #pdf-report-content .text-primary   { color: #b8922a !important; }
+
+  /* Hide interactive elements */
+  #pdf-report-content button,
+  #pdf-report-content [role="button"] {
+    display: none !important;
+  }
+
+  /* Page breaks */
+  .recharts-wrapper { page-break-inside: avoid; }
+
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+}
