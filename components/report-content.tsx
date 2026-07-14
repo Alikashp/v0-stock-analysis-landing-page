@@ -414,6 +414,8 @@ export function ReportContent({ ticker }: ReportContentProps) {
           insider_trades: data.insider_trades ?? [],
           analyst_ratings: data.analyst_ratings ?? [],
           news: data.news ?? [],
+          price_history: data.price_history ?? [],
+          annual_financials: data.annual_financials ?? [],
         }),
       });
       if (!response.ok) throw new Error(`${response.status}`);
