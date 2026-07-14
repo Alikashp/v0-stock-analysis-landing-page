@@ -8,6 +8,15 @@ interface ReportPageProps {
   params: Promise<{ ticker: string }>;
 }
 
+export async function generateMetadata({ params }: ReportPageProps) {
+  const { ticker } = await params;
+  const t = ticker.toUpperCase();
+  return {
+    title: `Анализ акций ${t} — ИИ-отчёт | StockAI`,
+    description: `Подробный ИИ-анализ акций ${t}: финансовые показатели, справедливая стоимость, риски и перспективы простым языком.`,
+  };
+}
+
 export default async function ReportPage({ params }: ReportPageProps) {
   const { ticker } = await params;
 
