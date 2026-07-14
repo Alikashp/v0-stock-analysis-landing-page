@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'StockAI - ИИ-анализ акций',
-  description: 'Получайте профессиональные аналитические отчёты за секунды с помощью искусственного интеллекта',
+  title: 'StockAI — ИИ-анализ акций простым языком',
+  description: 'Получите понятный анализ любой акции за секунды. ИИ объясняет бизнес компании, риски и перспективы простым языком — как разговор с аналитиком, а не сухой отчёт с цифрами.',
   generator: 'v0.app',
   icons: {
     icon: [
