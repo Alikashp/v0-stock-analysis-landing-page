@@ -400,9 +400,39 @@ export function ReportContent({ ticker }: ReportContentProps) {
     checkAccessAndFetch();
   }, [ticker]);
 
-  function downloadPDF() {
+  async function downloadPDF() {
     if (!data) return;
-    window.print();
+    setPdfLoading(true);
+    try {
+      const element = document.getElementById("pdf-report-content");
+      if (!element) return;
+
+      const domtoimage = (await import("dom-to-image-more")).default;
+      const { default: jsPDF } = await import("jspdf");
+
+      const canvas = await domtoimage.toCanvas(element, {
+        scale: 2,
+        bgcolor: "#0a0a0a",
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgH = (canvas.height / canvas.width) * pageW;
+
+      const totalPages = Math.ceil(imgH / pageH);
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, -i * pageH, pageW, imgH);
+      }
+
+      pdf.save(`${ticker.toUpperCase()}_report.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   async function fetchEarningsAnalysis() {
