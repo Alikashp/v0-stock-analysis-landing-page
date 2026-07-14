@@ -400,30 +400,9 @@ export function ReportContent({ ticker }: ReportContentProps) {
     checkAccessAndFetch();
   }, [ticker]);
 
-  async function downloadPDF() {
+  function downloadPDF() {
     if (!data) return;
-    setPdfLoading(true);
-    try {
-      const element = document.getElementById("pdf-report-content");
-      if (!element) throw new Error("Report element not found");
-      // @ts-expect-error no types for html2pdf.js
-      const html2pdf = (await import("html2pdf.js")).default;
-      await html2pdf()
-        .set({
-          margin: [10, 10, 10, 10],
-          filename: `${ticker.toUpperCase()}_report.pdf`,
-          image: { type: "jpeg", quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#0a0a0a" },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          pagebreak: { mode: ["avoid-all", "css"] },
-        })
-        .from(element)
-        .save();
-    } catch (err) {
-      console.error("PDF generation error:", err);
-    } finally {
-      setPdfLoading(false);
-    }
+    window.print();
   }
 
   async function fetchEarningsAnalysis() {
